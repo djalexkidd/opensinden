@@ -177,12 +177,13 @@ class CalibrationScreen(QtWidgets.QWidget):
         r = self.rect()
         p.fillRect(r, QtGui.QColor(50, 50, 50))
         settings = borders.BorderSettings.from_config(self.main.config)
+        b = QtCore.QRect(*settings.area(r.width(), r.height()))
         inner, outer = settings.thickness_px(r.height())
         if outer:
-            p.fillRect(r, QtGui.QColor(*settings.outer_color))
-        p.fillRect(r.adjusted(outer, outer, -outer, -outer), QtGui.QColor(*settings.color))
+            p.fillRect(b, QtGui.QColor(*settings.outer_color))
+        p.fillRect(b.adjusted(outer, outer, -outer, -outer), QtGui.QColor(*settings.color))
         t = inner + outer
-        p.fillRect(r.adjusted(t, t, -t, -t), QtGui.QColor(50, 50, 50))
+        p.fillRect(b.adjusted(t, t, -t, -t), QtGui.QColor(50, 50, 50))
 
         p.setPen(QtGui.QColor(235, 235, 235))
         f = p.font()
@@ -192,7 +193,7 @@ class CalibrationScreen(QtWidgets.QWidget):
                 "jusqu'à ce que le curseur aille au centre, puis tirez en visant le centre.\n"
                 "La pompe (pump action) annule.\n\n"
                 "Visez le coin inférieur droit 2 secondes (ou Échap) pour quitter.")
-        p.drawText(r.adjusted(t + 40, t + 40, -t - 40, -t - 40),
+        p.drawText(b.adjusted(t + 40, t + 40, -t - 40, -t - 40),
                    Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap, text)
 
         # Centre target
@@ -216,7 +217,8 @@ class CalibrationScreen(QtWidgets.QWidget):
             p.drawLine(QtCore.QPointF(x - 28, y), QtCore.QPointF(x + 28, y))
             p.drawLine(QtCore.QPointF(x, y - 28), QtCore.QPointF(x, y + 28))
             p.drawText(QtCore.QPointF(x + 22, y - 22), "P%d%s" % (i + 1, " CAL" if info["in_calibration"] else ""))
-            if sent[0] > 97 and sent[1] > 97 and t_.found_ratio > 0.5:
+            if (vision.screen_to_border(sent[0], settings.aspect) > 97 and sent[1] > 97
+                    and t_.found_ratio > 0.5):
                 since = self.corner_since.setdefault(i, now)
                 if now - since > 2000:
                     QtCore.QTimer.singleShot(0, self.close)
@@ -491,6 +493,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.border_width.setSingleStep(0.5)
         f.addRow("Couleur de la bordure principale (RGB 0-255)", self.border_rgb)
         f.addRow("Épaisseur (% de la hauteur, défaut 2)", self.border_width)
+        self.border_aspect = QtWidgets.QComboBox()
+        self.border_aspect.addItem("16:9 (plein écran)", "16:9")
+        self.border_aspect.addItem("4:3 (centrée, bandes latérales)", "4:3")
+        self.border_aspect.setToolTip("En 4:3, la bordure entoure un rectangle 4:3 centré sur l'écran 16:9 "
+                                      "et le curseur est limité à cette zone (jeux 4:3 dans MAME…).")
+        f.addRow("Format de la bordure", self.border_aspect)
         self.outer_enabled = QtWidgets.QCheckBox("Activer la bordure extérieure (écran à bord très fin)")
         f.addRow(self.outer_enabled)
         self.outer_rgb = RgbEdit((0, 0, 0))
@@ -762,6 +770,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.border_display.setValue(bs.display)
         self.border_method.setCurrentIndex(max(0, self.border_method.findData(bs.method)))
         self.border_reserve.setChecked(bs.reserve_space)
+        self.border_aspect.setCurrentIndex(max(0, self.border_aspect.findData(bs.aspect)))
         # offsets
         self.off_x.setValue(c.get_float("OffsetX", 0))
         self.off_y.setValue(c.get_float("OffsetY", 0))
@@ -805,6 +814,7 @@ class MainWindow(QtWidgets.QMainWindow):
         c.set("BorderDisplay", self.border_display.value())
         c.set("BorderMethod", self.border_method.currentData())
         c.set("BorderReserveSpace", self.border_reserve.isChecked())
+        c.set("BorderAspectRatio", self.border_aspect.currentData())
         c.set("OffsetX", self.off_x.value())
         c.set("OffsetY", self.off_y.value())
         c.set("OffsetXRatio", self.ratio_x.value())
@@ -902,6 +912,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def stop(self):
         self.engine.stop()
+        self.show_border(False)
         self._update_buttons()
 
     def _update_buttons(self):
@@ -1089,8 +1100,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def quit(self):
         self.engine.stop()
-        if self.border:
-            self.border.hide()
+        self.show_border(False)
         QtWidgets.QApplication.quit()
 
     def closeEvent(self, ev):

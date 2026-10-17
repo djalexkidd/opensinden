@@ -24,6 +24,7 @@ EXTRA_DEFAULTS = {
     "OuterBorderWidthPercent": "3",
     "BorderDisplay": "0",
     "BorderMethod": "auto",
+    "BorderAspectRatio": "16:9",
     "AntiJitter": "0",
     "AntiJitterPercent": "1",
     "JoystickMode": "0",

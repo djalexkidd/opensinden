@@ -40,16 +40,19 @@ QtObject {
     property var target_screen: Qt.application.screens.length > %(display)d ? Qt.application.screens[%(display)d] : Qt.application.screens[0]
     property int sw: target_screen.width
     property int sh: target_screen.height
+    // Horizontal margin of a centred 4:3 border (0 = full screen).
+    property int side: %(aspect43)s ? Math.max(0, Math.round((sw - sh * 4 / 3) / 2)) : 0
 
     property var top: Window {
         screen: root.target_screen
         LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
         LayerShell.Window.layer: LayerShell.Window.LayerOverlay
+        LayerShell.Window.margins: ({left: root.side, right: root.side, top: 0, bottom: 0})
         LayerShell.Window.exclusionZone: %(exclusion)s
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
         LayerShell.Window.scope: "opensinden-border"
         visible: true
-        width: root.sw
+        width: root.sw - 2 * root.side
         height: root.total
         color: "transparent"
         Rectangle { anchors.fill: parent; color: root.outer_fill_color; visible: root.outer_thickness > 0 }
@@ -63,11 +66,12 @@ QtObject {
         screen: root.target_screen
         LayerShell.Window.anchors: LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
         LayerShell.Window.layer: LayerShell.Window.LayerOverlay
+        LayerShell.Window.margins: ({left: root.side, right: root.side, top: 0, bottom: 0})
         LayerShell.Window.exclusionZone: %(exclusion)s
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
         LayerShell.Window.scope: "opensinden-border"
         visible: true
-        width: root.sw
+        width: root.sw - 2 * root.side
         height: root.total
         color: "transparent"
         Rectangle { anchors.fill: parent; color: root.outer_fill_color; visible: root.outer_thickness > 0 }
@@ -81,6 +85,7 @@ QtObject {
         screen: root.target_screen
         LayerShell.Window.anchors: LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom
         LayerShell.Window.layer: LayerShell.Window.LayerOverlay
+        LayerShell.Window.margins: ({left: root.side, right: 0, top: 0, bottom: 0})
         LayerShell.Window.exclusionZone: %(exclusion)s
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
         LayerShell.Window.scope: "opensinden-border"
@@ -99,6 +104,7 @@ QtObject {
         screen: root.target_screen
         LayerShell.Window.anchors: LayerShell.Window.AnchorRight | LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom
         LayerShell.Window.layer: LayerShell.Window.LayerOverlay
+        LayerShell.Window.margins: ({left: 0, right: root.side, top: 0, bottom: 0})
         LayerShell.Window.exclusionZone: %(exclusion)s
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
         LayerShell.Window.scope: "opensinden-border"
@@ -127,6 +133,7 @@ class BorderSettings:
     display: int = 0
     method: str = "auto"                 # auto | layershell | qt
     reserve_space: bool = False
+    aspect: str = "16:9"                 # 16:9 (full screen) | 4:3 (centred, side bars)
 
     @classmethod
     def from_config(cls, c: Config):
@@ -139,12 +146,20 @@ class BorderSettings:
             display=c.get_int("BorderDisplay", 0),
             method=c.get("BorderMethod", "auto") or "auto",
             reserve_space=c.get_bool("BorderReserveSpace"),
+            aspect=c.get("BorderAspectRatio", "16:9") or "16:9",
         )
 
     def thickness_px(self, screen_height):
         inner = max(1, int(round(screen_height * self.width_percent / 100.0)))
         outer = int(round(screen_height * self.outer_width_percent / 100.0)) if self.outer_enabled else 0
         return inner, outer
+
+    def area(self, width, height):
+        """(x, y, w, h) of the bordered region: full screen, or a centred 4:3 rectangle."""
+        if self.aspect == "4:3":
+            w = min(width, int(round(height * 4 / 3)))
+            return (width - w) // 2, 0, w, height
+        return 0, 0, width, height
 
 
 def _hex(rgb):
@@ -188,7 +203,18 @@ def generate_qml(settings: BorderSettings, screen_height):
         "outer": outer,
         "display": int(settings.display),
         "exclusion": exclusion,
+        "aspect43": "true" if settings.aspect == "4:3" else "false",
     }
+
+
+def _die_with_parent():
+    """Ask the kernel to SIGTERM the qml6 child if OpenSinden dies (crash, SIGKILL)."""
+    try:
+        import ctypes
+        PR_SET_PDEATHSIG = 1
+        ctypes.CDLL(None, use_errno=True).prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
+    except Exception:  # noqa: BLE001
+        pass
 
 
 class LayerShellBorder:
@@ -210,7 +236,8 @@ class LayerShellBorder:
         self.log_path = self.qml_path + ".log"
         self._log = open(self.log_path, "w")
         self.proc = subprocess.Popen([qml6_binary(), self.qml_path], env=env,
-                                     stdout=subprocess.DEVNULL, stderr=self._log)
+                                     stdout=subprocess.DEVNULL, stderr=self._log,
+                                     preexec_fn=_die_with_parent)
 
     def failed(self):
         """True if the qml process died (e.g. missing module)."""
@@ -261,7 +288,7 @@ class QtBorder:
             def paintEvent(self, _ev):
                 s = settings_ref
                 p = QtGui.QPainter(self)
-                r = self.rect()
+                r = QtCore.QRect(*s.area(self.width(), self.height()))
                 inner, outer = s.thickness_px(r.height())
                 if outer:
                     p.fillRect(r, QtGui.QColor(*s.outer_color))

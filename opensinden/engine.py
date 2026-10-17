@@ -195,6 +195,7 @@ class GunTracker:
         self.y_ratio = c.get_float("OffsetYRatio", 1.0) or 1.0
         self.anti_jitter = c.get_bool("AntiJitter")
         self.anti_jitter_pct = c.get_float("AntiJitterPercent", 1.0)
+        self.border_aspect = c.get("BorderAspectRatio", "16:9") or "16:9"
 
     def setup_gun(self):
         """Equivalent of SetupLightgunSettings() of the official driver."""
@@ -358,6 +359,7 @@ class GunTracker:
             if res.found:
                 x, y = vision.apply_user_offsets(res.x, res.y, res.gangsta, self.x_ratio,
                                                  self.x_offset, self.y_ratio, self.y_offset, 4.9)
+                x = vision.border_to_screen(x, self.border_aspect)
                 if self._should_move(x, y):
                     self.gun.send_position(x, y)
                     self.last_sent = (x, y)

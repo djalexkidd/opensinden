@@ -280,6 +280,22 @@ def apply_user_offsets(x, y, gangsta, x_ratio=1.0, x_offset=0.0, y_ratio=1.0,
     return max(0.0, min(100.0, x)), max(0.0, min(100.0, y))
 
 
+def border_to_screen(x, aspect="16:9"):
+    """Map a horizontal percentage of the border region to the whole screen.
+
+    A 4:3 border is centred on a 16:9 screen, so it covers 75 % of the width.
+    """
+    if aspect == "4:3":
+        return 12.5 + x * 0.75
+    return x
+
+
+def screen_to_border(x, aspect="16:9"):
+    if aspect == "4:3":
+        return (x - 12.5) / 0.75
+    return x
+
+
 def render_processed(mask, result: DetectionResult, show_rect=True):
     """Preview image of the processed mask (like the official 'Processed Image')."""
     vis = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
