@@ -88,7 +88,7 @@ class ColorButton(QtWidgets.QPushButton):
     changed = QtCore.Signal(tuple)
 
     def __init__(self, rgb=(255, 255, 255)):
-        super().__init__("Choisir…")
+        super().__init__("Choose…")
         self.rgb = tuple(rgb)
         self.clicked.connect(self._pick)
         self._update()
@@ -189,10 +189,10 @@ class CalibrationScreen(QtWidgets.QWidget):
         f = p.font()
         f.setPointSize(max(12, r.height() // 45))
         p.setFont(f)
-        text = ("Pour calibrer : maintenez la croix directionnelle GAUCHE 3 secondes\n"
-                "jusqu'à ce que le curseur aille au centre, puis tirez en visant le centre.\n"
-                "La pompe (pump action) annule.\n\n"
-                "Visez le coin inférieur droit 2 secondes (ou Échap) pour quitter.")
+        text = ("To calibrate: hold the D-pad LEFT for 3 seconds\n"
+                "until the cursor jumps to the centre, then pull the trigger while aiming at the centre.\n"
+                "The pump action cancels.\n\n"
+                "Aim at the bottom-right corner for 2 seconds (or press Esc) to quit.")
         p.drawText(b.adjusted(t + 40, t + 40, -t - 40, -t - 40),
                    Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap, text)
 
@@ -245,16 +245,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(central)
         v = QtWidgets.QVBoxLayout(central)
         top = QtWidgets.QHBoxLayout()
-        top.addWidget(QtWidgets.QLabel("Joueur :"))
+        top.addWidget(QtWidgets.QLabel("Player:"))
         self.player_combo = QtWidgets.QComboBox()
         self.player_combo.addItems(["Lightgun 1 (P1)", "Lightgun 2 (P2)"])
         self.player_combo.currentIndexChanged.connect(self._player_changed)
         top.addWidget(self.player_combo)
         top.addStretch(1)
-        self.status_label = QtWidgets.QLabel("Arrêté")
+        self.status_label = QtWidgets.QLabel("Stopped")
         top.addWidget(self.status_label)
-        self.start_btn = QtWidgets.QPushButton("Démarrer")
-        self.stop_btn = QtWidgets.QPushButton("Arrêter")
+        self.start_btn = QtWidgets.QPushButton("Start")
+        self.stop_btn = QtWidgets.QPushButton("Stop")
         self.start_btn.setMinimumWidth(120)
         self.stop_btn.setMinimumWidth(120)
         self.start_btn.clicked.connect(self.start)
@@ -265,15 +265,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.tabs = QtWidgets.QTabWidget()
         v.addWidget(self.tabs)
-        self.tabs.addTab(self._home_tab(), "Accueil")
-        self.tabs.addTab(self._select_tab(), "Sélection du pistolet")
+        self.tabs.addTab(self._home_tab(), "Home")
+        self.tabs.addTab(self._select_tab(), "Gun selection")
         self.tabs.addTab(self._config_tab(), "Configuration")
-        self.tabs.addTab(self._border_tab(), "Bordure")
-        self.tabs.addTab(self._alignment_tab(), "Alignement")
-        self.tabs.addTab(self._offset_tab(), "Décalage curseur")
-        self.tabs.addTab(self._buttons_tab(), "Boutons")
-        self.tabs.addTab(self._recoil_tab(), "Recul")
-        self.tabs.addTab(self._about_tab(), "À propos")
+        self.tabs.addTab(self._border_tab(), "Border")
+        self.tabs.addTab(self._alignment_tab(), "Alignment")
+        self.tabs.addTab(self._offset_tab(), "Cursor offset")
+        self.tabs.addTab(self._buttons_tab(), "Buttons")
+        self.tabs.addTab(self._recoil_tab(), "Recoil")
+        self.tabs.addTab(self._about_tab(), "About")
         self.tabs.currentChanged.connect(self._tab_changed)
 
         self.log_handler = QtLogHandler()
@@ -296,14 +296,14 @@ class MainWindow(QtWidgets.QMainWindow):
         w = QtWidgets.QWidget()
         lay = QtWidgets.QVBoxLayout(w)
         title = QtWidgets.QLabel("<h1>OpenSinden Lightgun</h1>"
-                                 "<p>Pilote Linux libre pour le Sinden Lightgun. Branchez le pistolet, "
-                                 "affichez la bordure blanche puis cliquez sur <b>Démarrer</b>.</p>")
+                                 "<p>Free Linux driver for the Sinden Lightgun. Plug in the gun, "
+                                 "show the white border, then click <b>Start</b>.</p>")
         title.setWordWrap(True)
         lay.addWidget(title)
         row = QtWidgets.QHBoxLayout()
-        self.home_border_btn = QtWidgets.QPushButton("Afficher / masquer la bordure")
+        self.home_border_btn = QtWidgets.QPushButton("Show / hide the border")
         self.home_border_btn.clicked.connect(self.toggle_border)
-        self.home_calib_btn = QtWidgets.QPushButton("Écran de calibration / test")
+        self.home_calib_btn = QtWidgets.QPushButton("Calibration / test screen")
         self.home_calib_btn.clicked.connect(self.open_calibration_screen)
         row.addWidget(self.home_border_btn)
         row.addWidget(self.home_calib_btn)
@@ -312,7 +312,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.home_status = QtWidgets.QLabel()
         self.home_status.setTextFormat(Qt.TextFormat.RichText)
         lay.addWidget(self.home_status)
-        lay.addWidget(QtWidgets.QLabel("Journal :"))
+        lay.addWidget(QtWidgets.QLabel("Log:"))
         self.log_view = QtWidgets.QPlainTextEdit()
         self.log_view.setReadOnly(True)
         self.log_view.setMaximumBlockCount(2000)
@@ -324,25 +324,25 @@ class MainWindow(QtWidgets.QMainWindow):
         g = QtWidgets.QGridLayout(w)
         left = QtWidgets.QVBoxLayout()
         btns = QtWidgets.QHBoxLayout()
-        b = QtWidgets.QPushButton("Rafraîchir")
+        b = QtWidgets.QPushButton("Refresh")
         b.clicked.connect(self.refresh_guns)
         btns.addWidget(b)
         btns.addStretch(1)
         left.addLayout(btns)
-        left.addWidget(QtWidgets.QLabel("Pistolets détectés :"))
+        left.addWidget(QtWidgets.QLabel("Detected guns:"))
         self.gun_list = QtWidgets.QListWidget()
         left.addWidget(self.gun_list)
         left.addWidget(QtWidgets.QLabel(
-            "Avec 2 pistolets, le premier port détecté est le joueur 1.\n"
-            "Évitez les hubs USB alimentés ; branchez chaque pistolet sur un contrôleur USB différent."))
+            "With 2 guns, the first detected port is player 1.\n"
+            "Avoid powered USB hubs; plug each gun into a different USB controller."))
         g.addLayout(left, 0, 0)
         right = QtWidgets.QVBoxLayout()
-        right.addWidget(QtWidgets.QLabel("Informations du pistolet (pistolet démarré) :"))
+        right.addWidget(QtWidgets.QLabel("Gun information (gun started):"))
         self.gun_info = QtWidgets.QPlainTextEdit()
         self.gun_info.setReadOnly(True)
         right.addWidget(self.gun_info)
-        right.addWidget(note("La mise à jour du firmware n'est pas prise en charge par ce logiciel "
-                             "(utilisez l'outil officiel sous Windows). Firmware ≥ v1.9 recommandé."))
+        right.addWidget(note("Firmware updates are not supported by this software "
+                             "(use the official tool on Windows). Firmware ≥ v1.9 recommended."))
         g.addLayout(right, 0, 1)
         return w
 
@@ -352,7 +352,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Left column: calibration, options, camera controls
         left = QtWidgets.QVBoxLayout()
-        gb = QtWidgets.QGroupBox("Ajustement si la caméra est mal alignée")
+        gb = QtWidgets.QGroupBox("Adjustment if the camera is misaligned")
         f = QtWidgets.QFormLayout(gb)
         self.cal_x = QtWidgets.QDoubleSpinBox()
         self.cal_y = QtWidgets.QDoubleSpinBox()
@@ -363,9 +363,9 @@ class MainWindow(QtWidgets.QMainWindow):
         f.addRow("X Adjust %", self.cal_x)
         f.addRow("Y Adjust %", self.cal_y)
         hb = QtWidgets.QHBoxLayout()
-        b1 = QtWidgets.QPushButton("Graver dans le pistolet")
+        b1 = QtWidgets.QPushButton("Write to gun")
         b1.clicked.connect(self.burn_calibration)
-        b2 = QtWidgets.QPushButton("Lire depuis le pistolet")
+        b2 = QtWidgets.QPushButton("Read from gun")
         b2.clicked.connect(self.read_calibration)
         hb.addWidget(b1)
         hb.addWidget(b2)
@@ -374,53 +374,53 @@ class MainWindow(QtWidgets.QMainWindow):
 
         gb = QtWidgets.QGroupBox("Options")
         f = QtWidgets.QFormLayout(gb)
-        self.offscreen_reload = QtWidgets.QCheckBox("Rechargement hors écran")
-        self.match_pointing = QtWidgets.QCheckBox("Détecter uniquement là où l'on vise")
+        self.offscreen_reload = QtWidgets.QCheckBox("Offscreen reload")
+        self.match_pointing = QtWidgets.QCheckBox("Only detect where aiming")
         self.colour_range = QtWidgets.QSpinBox()
         self.colour_range.setRange(1, 450)
         self.colour_match = RgbEdit()
         self.joystick_mode = QtWidgets.QCheckBox("Mode joystick")
-        self.enable_calibration = QtWidgets.QCheckBox("Calibration en maintenant GAUCHE 3 s")
-        self.autosave_cal = QtWidgets.QCheckBox("Sauvegarder la calibration dans le pistolet")
-        self.anti_jitter = QtWidgets.QCheckBox("Anti-tremblement")
+        self.enable_calibration = QtWidgets.QCheckBox("Calibrate by holding LEFT for 3 s")
+        self.autosave_cal = QtWidgets.QCheckBox("Save calibration in the gun")
+        self.anti_jitter = QtWidgets.QCheckBox("Anti-jitter")
         self.anti_jitter_pct = QtWidgets.QDoubleSpinBox()
         self.anti_jitter_pct.setRange(0, 10)
         self.anti_jitter_pct.setSingleStep(0.1)
         self.camera_res = QtWidgets.QComboBox()
         self.camera_res.addItems(["640,480", "320,240"])
         self.gangsta = QtWidgets.QComboBox()
-        self.gangsta.addItem("Désactivé", "0")
-        self.gangsta.addItem("Gaucher", "1")
-        self.gangsta.addItem("Droitier", "2")
+        self.gangsta.addItem("Disabled", "0")
+        self.gangsta.addItem("Left-handed", "1")
+        self.gangsta.addItem("Right-handed", "2")
         for wdg in (self.offscreen_reload, self.match_pointing, self.joystick_mode,
                     self.enable_calibration, self.autosave_cal):
             f.addRow(wdg)
-        f.addRow("Couleur de bordure recherchée (RGB)", self.colour_match)
-        f.addRow("Rayon de correspondance couleur", self.colour_range)
+        f.addRow("Border colour to match (RGB)", self.colour_match)
+        f.addRow("Colour match radius", self.colour_range)
         jr = QtWidgets.QHBoxLayout()
         jr.addWidget(self.anti_jitter)
-        jr.addWidget(QtWidgets.QLabel("Mouvement mini %"))
+        jr.addWidget(QtWidgets.QLabel("Minimum movement %"))
         jr.addWidget(self.anti_jitter_pct)
         f.addRow(jr)
-        f.addRow("Résolution caméra", self.camera_res)
-        f.addRow("Mode « gangsta » (pistolet couché)", self.gangsta)
+        f.addRow("Camera resolution", self.camera_res)
+        f.addRow("\"Gangsta\" mode (gun held sideways)", self.gangsta)
         left.addWidget(gb)
 
-        gb = QtWidgets.QGroupBox("Contrôles caméra (appliqués en direct)")
+        gb = QtWidgets.QGroupBox("Camera controls (applied live)")
         grid = QtWidgets.QGridLayout(gb)
         self.cam_ctrls = {}
-        ctrls = [("contrast", "Contraste"), ("brightness", "Luminosité"),
-                 ("exposure_auto", "Exposition auto (1=manuelle, 3=auto)"),
-                 ("exposure", "Exposition"), ("gain", "Gain"), ("zoom", "Zoom"), ("hue", "Teinte"),
-                 ("saturation", "Saturation"), ("white_balance_auto", "Balance des blancs auto"),
-                 ("white_balance", "Balance des blancs")]
+        ctrls = [("contrast", "Contrast"), ("brightness", "Brightness"),
+                 ("exposure_auto", "Auto exposure (1=manual, 3=auto)"),
+                 ("exposure", "Exposure"), ("gain", "Gain"), ("zoom", "Zoom"), ("hue", "Hue"),
+                 ("saturation", "Saturation"), ("white_balance_auto", "Auto white balance"),
+                 ("white_balance", "White balance")]
         for row, (key, label) in enumerate(ctrls):
             grid.addWidget(QtWidgets.QLabel(label), row, 0)
             sp = QtWidgets.QSpinBox()
             sp.setRange(-10000, 10000)
             grid.addWidget(sp, row, 1)
-            bg = QtWidgets.QPushButton("Lire")
-            bs = QtWidgets.QPushButton("Appliquer")
+            bg = QtWidgets.QPushButton("Read")
+            bs = QtWidgets.QPushButton("Apply")
             bg.clicked.connect(lambda _c=False, k=key: self.get_camera_control(k))
             bs.clicked.connect(lambda _c=False, k=key: self.set_camera_control(k))
             grid.addWidget(bg, row, 2)
@@ -428,7 +428,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.cam_ctrls[key] = sp
         left.addWidget(gb)
         left.addStretch(1)
-        save = QtWidgets.QPushButton("Enregistrer les réglages")
+        save = QtWidgets.QPushButton("Save settings")
         save.clicked.connect(self.save_settings)
         left.addWidget(save)
         lw = QtWidgets.QWidget()
@@ -441,8 +441,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Right: previews
         right = QtWidgets.QGridLayout()
-        right.addWidget(QtWidgets.QLabel("Caméra brute"), 0, 0)
-        right.addWidget(QtWidgets.QLabel("Image traitée"), 0, 1)
+        right.addWidget(QtWidgets.QLabel("Raw camera"), 0, 0)
+        right.addWidget(QtWidgets.QLabel("Processed image"), 0, 1)
         self.raw_view = QtWidgets.QLabel()
         self.proc_view = QtWidgets.QLabel()
         for lab in (self.raw_view, self.proc_view):
@@ -451,9 +451,9 @@ class MainWindow(QtWidgets.QMainWindow):
             lab.setAlignment(Qt.AlignmentFlag.AlignCenter)
         right.addWidget(self.raw_view, 1, 0)
         right.addWidget(self.proc_view, 1, 1)
-        self.show_raw = QtWidgets.QCheckBox("Afficher la vidéo brute")
-        self.show_proc = QtWidgets.QCheckBox("Afficher la vidéo traitée")
-        self.show_rect = QtWidgets.QCheckBox("Afficher le rectangle")
+        self.show_raw = QtWidgets.QCheckBox("Show raw video")
+        self.show_proc = QtWidgets.QCheckBox("Show processed video")
+        self.show_rect = QtWidgets.QCheckBox("Show rectangle")
         for c in (self.show_raw, self.show_proc, self.show_rect):
             c.setChecked(True)
         right.addWidget(self.show_raw, 2, 0)
@@ -464,10 +464,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.perf_label = QtWidgets.QLabel()
         right.addWidget(self.perf_label, 3, 0, 1, 2)
         right.addWidget(note(
-            "Activez la bordure : l'image traitée doit montrer un rectangle hachuré couvrant l'écran. "
-            "Des taches blanches autour de l'écran (lampes, fenêtres, reflets) peuvent gêner la détection. "
-            "Si l'image clignote ou montre des blocs verts, essayez un autre port USB. "
-            "Une barre noire qui défile : modifiez l'exposition."), 4, 0, 1, 2)
+            "Enable the border: the processed image should show a hatched rectangle covering the screen. "
+            "White spots around the screen (lamps, windows, reflections) can disturb detection. "
+            "If the image flickers or shows green blocks, try another USB port. "
+            "A scrolling black bar: change the exposure."), 4, 0, 1, 2)
         right.setRowStretch(5, 1)
         outer.addLayout(right, 1)
         return w
@@ -476,59 +476,59 @@ class MainWindow(QtWidgets.QMainWindow):
         w = QtWidgets.QWidget()
         lay = QtWidgets.QVBoxLayout(w)
         row = QtWidgets.QHBoxLayout()
-        b = QtWidgets.QPushButton("Afficher / masquer la bordure")
+        b = QtWidgets.QPushButton("Show / hide the border")
         b.clicked.connect(self.toggle_border)
         row.addWidget(b)
         row.addStretch(1)
-        save = QtWidgets.QPushButton("Enregistrer les réglages")
+        save = QtWidgets.QPushButton("Save settings")
         save.clicked.connect(self.save_settings)
         row.addWidget(save)
         lay.addLayout(row)
         f = QtWidgets.QFormLayout()
-        self.border_auto = QtWidgets.QCheckBox("Afficher la bordure au démarrage du pistolet")
+        self.border_auto = QtWidgets.QCheckBox("Show the border when the gun starts")
         f.addRow(self.border_auto)
         self.border_rgb = RgbEdit()
         self.border_width = QtWidgets.QDoubleSpinBox()
         self.border_width.setRange(0.2, 20)
         self.border_width.setSingleStep(0.5)
-        f.addRow("Couleur de la bordure principale (RGB 0-255)", self.border_rgb)
-        f.addRow("Épaisseur (% de la hauteur, défaut 2)", self.border_width)
+        f.addRow("Main border colour (RGB 0-255)", self.border_rgb)
+        f.addRow("Thickness (% of height, default 2)", self.border_width)
         self.border_aspect = QtWidgets.QComboBox()
-        self.border_aspect.addItem("16:9 (plein écran)", "16:9")
-        self.border_aspect.addItem("4:3 (centrée, bandes latérales)", "4:3")
-        self.border_aspect.setToolTip("En 4:3, la bordure entoure un rectangle 4:3 centré sur l'écran 16:9 "
-                                      "et le curseur est limité à cette zone (jeux 4:3 dans MAME…).")
-        f.addRow("Format de la bordure", self.border_aspect)
-        self.outer_enabled = QtWidgets.QCheckBox("Activer la bordure extérieure (écran à bord très fin)")
+        self.border_aspect.addItem("16:9 (fullscreen)", "16:9")
+        self.border_aspect.addItem("4:3 (centred, side bars)", "4:3")
+        self.border_aspect.setToolTip("In 4:3, the border surrounds a 4:3 rectangle centred on the 16:9 screen "
+                                      "and the cursor is limited to that area (4:3 games in MAME…).")
+        f.addRow("Border aspect ratio", self.border_aspect)
+        self.outer_enabled = QtWidgets.QCheckBox("Enable outer border (screen with very thin bezel)")
         f.addRow(self.outer_enabled)
         self.outer_rgb = RgbEdit((0, 0, 0))
         self.outer_width = QtWidgets.QDoubleSpinBox()
         self.outer_width.setRange(0.2, 20)
         self.outer_width.setSingleStep(0.5)
-        f.addRow("Couleur de la bordure extérieure", self.outer_rgb)
-        f.addRow("Épaisseur extérieure (% de la hauteur)", self.outer_width)
+        f.addRow("Outer border colour", self.outer_rgb)
+        f.addRow("Outer thickness (% of height)", self.outer_width)
         self.border_display = QtWidgets.QSpinBox()
         self.border_display.setRange(0, 8)
-        f.addRow("Écran sur lequel dessiner la bordure (0 = principal)", self.border_display)
+        f.addRow("Screen to draw the border on (0 = primary)", self.border_display)
         self.border_method = QtWidgets.QComboBox()
-        self.border_method.addItem("Automatique", "auto")
-        self.border_method.addItem("Layer-shell KDE/Wayland (kde-screen-borders)", "layershell")
-        self.border_method.addItem("Fenêtre Qt superposée", "qt")
-        f.addRow("Méthode d'affichage", self.border_method)
+        self.border_method.addItem("Automatic", "auto")
+        self.border_method.addItem("KDE/Wayland layer-shell (kde-screen-borders)", "layershell")
+        self.border_method.addItem("Qt overlay window", "qt")
+        f.addRow("Display method", self.border_method)
         self.border_reserve = QtWidgets.QCheckBox(
-            "Réserver l'espace de la bordure (les fenêtres maximisées l'évitent ; layer-shell uniquement)")
+            "Reserve the border space (maximised windows avoid it; layer-shell only)")
         f.addRow(self.border_reserve)
         lay.addLayout(f)
-        ls = "disponible" if borders.layershell_available() else \
-            "NON disponible (installez le paquet layer-shell-qt6-imports)"
-        lay.addWidget(QtWidgets.QLabel("Module QML org.kde.layershell : " + ls))
+        ls = "available" if borders.layershell_available() else \
+            "NOT available (install the layer-shell-qt6-imports package)"
+        lay.addWidget(QtWidgets.QLabel("QML module org.kde.layershell: " + ls))
         lay.addWidget(QtWidgets.QLabel(
-            "Raccourci global : dans Configuration du système → Raccourcis, ajoutez une commande :\n"
+            "Global shortcut: in System Settings → Shortcuts, add a command:\n"
             "    %s border --toggle" % self._launcher_cmd()))
         lay.addWidget(note(
-            "Le Sinden Lightgun est sensible aux sources lumineuses. La lumière ambiante, les lampes "
-            "puissantes ou les reflets sur l'écran ou son cadre peuvent poser problème. Désactivez le "
-            "mode ÉCO de la TV et tout capteur de luminosité / rétroéclairage automatique."))
+            "The Sinden Lightgun is sensitive to light sources. Ambient light, bright lamps "
+            "or reflections on the screen or its frame can cause problems. Disable the "
+            "TV's ECO mode and any automatic brightness / backlight sensor."))
         lay.addStretch(1)
         return w
 
@@ -536,8 +536,8 @@ class MainWindow(QtWidgets.QMainWindow):
         w = QtWidgets.QWidget()
         lay = QtWidgets.QHBoxLayout(w)
         left = QtWidgets.QVBoxLayout()
-        t = QtWidgets.QLabel("<h2>Calibrer en maintenant la croix GAUCHE 3 secondes puis en tirant "
-                             "sur le curseur quand il arrive au centre. La pompe annule.</h2>")
+        t = QtWidgets.QLabel("<h2>Calibrate by holding the D-pad LEFT for 3 seconds, then pulling the trigger "
+                             "on the cursor when it reaches the centre. The pump cancels.</h2>")
         t.setWordWrap(True)
         left.addWidget(t)
         f = QtWidgets.QFormLayout()
@@ -546,20 +546,20 @@ class MainWindow(QtWidgets.QMainWindow):
         f.addRow("X Adjust %", self.align_x)
         f.addRow("Y Adjust %", self.align_y)
         left.addLayout(f)
-        b = QtWidgets.QPushButton("Remettre l'alignement à zéro")
+        b = QtWidgets.QPushButton("Reset alignment to zero")
         b.clicked.connect(lambda: self._set_calibration(0.0, 0.0))
         left.addWidget(b)
-        b = QtWidgets.QPushButton("Enregistrer l'alignement dans le pistolet")
+        b = QtWidgets.QPushButton("Save alignment in the gun")
         b.setMinimumHeight(40)
         b.clicked.connect(self.burn_calibration_current)
         left.addWidget(b)
-        b = QtWidgets.QPushButton("Ouvrir l'écran de calibration / test")
+        b = QtWidgets.QPushButton("Open the calibration / test screen")
         b.clicked.connect(self.open_calibration_screen)
         left.addWidget(b)
         left.addWidget(note(
-            "Vérifiez que la bordure est affichée sur tout l'écran. Visez l'écran et maintenez GAUCHE "
-            "3 secondes : le curseur va au centre. Visez-le et tirez. Si l'alignement est légèrement "
-            "décalé, corrigez avec les flèches (grandes = 0,5 %, petites = 0,1 %)."))
+            "Check that the border is displayed around the whole screen. Aim at the screen and hold LEFT "
+            "for 3 seconds: the cursor goes to the centre. Aim at it and shoot. If the alignment is slightly "
+            "off, correct it with the arrows (large = 0.5%, small = 0.1%)."))
         left.addStretch(1)
         lay.addLayout(left, 1)
 
@@ -602,25 +602,25 @@ class MainWindow(QtWidgets.QMainWindow):
             s.setRange(0.01, 10)
             s.setDecimals(4)
             s.setSingleStep(0.01)
-        f.addRow("Décalage X (gauche → droite, %)", self.off_x)
-        f.addRow("Facteur X", self.ratio_x)
-        f.addRow("Décalage Y (haut → bas, %)", self.off_y)
-        f.addRow("Facteur Y", self.ratio_y)
-        f.addRow("Décalage du viseur (fixe, % hauteur)", QtWidgets.QLabel("4.9"))
+        f.addRow("X offset (left → right, %)", self.off_x)
+        f.addRow("X factor", self.ratio_x)
+        f.addRow("Y offset (top → bottom, %)", self.off_y)
+        f.addRow("Y factor", self.ratio_y)
+        f.addRow("Sight offset (fixed, % of height)", QtWidgets.QLabel("4.9"))
         lay.addLayout(f)
         row = QtWidgets.QHBoxLayout()
-        b = QtWidgets.QPushButton("Réinitialiser")
+        b = QtWidgets.QPushButton("Reset")
         b.clicked.connect(lambda: (self.off_x.setValue(0), self.off_y.setValue(0),
                                    self.ratio_x.setValue(1), self.ratio_y.setValue(1)))
         row.addWidget(b)
-        b = QtWidgets.QPushButton("Enregistrer les réglages")
+        b = QtWidgets.QPushButton("Save settings")
         b.clicked.connect(self.save_settings)
         row.addWidget(b)
         row.addStretch(1)
         lay.addLayout(row)
-        lay.addWidget(note("position finale = position × facteur + décalage. Utile si un jeu/émulateur "
-                           "n'aligne pas les tirs avec le curseur, ou si la bordure ne correspond pas "
-                           "à la fenêtre du jeu."))
+        lay.addWidget(note("final position = position × factor + offset. Useful if a game/emulator "
+                           "does not align shots with the cursor, or if the border does not match "
+                           "the game window."))
         lay.addStretch(1)
         return w
 
@@ -629,25 +629,25 @@ class MainWindow(QtWidgets.QMainWindow):
         lay = QtWidgets.QVBoxLayout(w)
         top = QtWidgets.QHBoxLayout()
         self.btn_mode = QtWidgets.QComboBox()
-        self.btn_mode.addItem("Mode souris / clavier", False)
-        self.btn_mode.addItem("Mode joystick", True)
+        self.btn_mode.addItem("Mouse / keyboard mode", False)
+        self.btn_mode.addItem("Joystick mode", True)
         self.btn_mode.currentIndexChanged.connect(self._load_buttons)
-        top.addWidget(QtWidgets.QLabel("Assignations pour :"))
+        top.addWidget(QtWidgets.QLabel("Assignments for:"))
         top.addWidget(self.btn_mode)
         top.addStretch(1)
-        b = QtWidgets.QPushButton("Enregistrer et appliquer")
+        b = QtWidgets.QPushButton("Save and apply")
         b.clicked.connect(self.save_buttons)
         top.addWidget(b)
         lay.addLayout(top)
         grid = QtWidgets.QGridLayout()
-        heads = ["", "Normal : action", "Modificateur", "Hors écran : action", "Modificateur"]
+        heads = ["", "Normal: action", "Modifier", "Offscreen: action", "Modifier"]
         for i, h in enumerate(heads):
             lab = QtWidgets.QLabel("<b>%s</b>" % h)
             grid.addWidget(lab, 0, i)
-        labels = {"Trigger": "Gâchette", "PumpAction": "Pompe", "FrontLeft": "Avant gauche",
-                  "RearLeft": "Arrière gauche", "FrontRight": "Avant droit",
-                  "RearRight": "Arrière droit", "Up": "Haut", "Down": "Bas", "Left": "Gauche",
-                  "Right": "Droite"}
+        labels = {"Trigger": "Trigger", "PumpAction": "Pump action", "FrontLeft": "Front left",
+                  "RearLeft": "Rear left", "FrontRight": "Front right",
+                  "RearRight": "Rear right", "Up": "Up", "Down": "Down", "Left": "Left",
+                  "Right": "Right"}
         self.btn_widgets = {}
         for r, name in enumerate(BUTTON_NAMES, start=1):
             grid.addWidget(QtWidgets.QLabel(labels[name]), r, 0)
@@ -662,8 +662,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 grid.addWidget(mod, r, c + 1)
                 self.btn_widgets[name + off] = (act, mod)
         lay.addLayout(grid)
-        lay.addWidget(QtWidgets.QLabel("NOTE : les majuscules sont envoyées comme Maj+lettre ; "
-                                       "préférez les minuscules."))
+        lay.addWidget(QtWidgets.QLabel("NOTE: capital letters are sent as Shift+letter; "
+                                       "prefer lowercase."))
         lay.addStretch(1)
         return w
 
@@ -671,40 +671,40 @@ class MainWindow(QtWidgets.QMainWindow):
         w = QtWidgets.QWidget()
         lay = QtWidgets.QVBoxLayout(w)
         lay.addWidget(note(
-            "Réglages du recul (modèles Sinden avec recul). Ils sont envoyés au pistolet au prochain "
-            "démarrage. Tant que « Activer le recul » n'est pas coché, le recul est explicitement "
-            "désactivé dans le pistolet. Aucun bouton de test n'est proposé."))
+            "Recoil settings (Sinden models with recoil). They are sent to the gun at the next "
+            "start. As long as \"Enable recoil\" is not checked, recoil is explicitly "
+            "disabled in the gun. No test button is provided."))
         f = QtWidgets.QFormLayout()
         self.rc = {}
         def cb(key, label):
             c = QtWidgets.QCheckBox(label)
             self.rc[key] = c
             f.addRow(c)
-        cb("IAgreeRecoilTermsInLicense", "J'accepte les conditions d'utilisation du recul (licence Sinden)")
-        cb("EnableRecoil", "Activer le recul")
-        cb("RecoilTrigger", "Recul sur la gâchette")
-        cb("RecoilTriggerOffscreen", "Recul sur la gâchette hors écran")
-        cb("RecoilPumpActionOnEvent", "Recul pompe – appui")
-        cb("RecoilPumpActionOffEvent", "Recul pompe – relâchement")
-        cb("RecoilFrontLeft", "Recul avant gauche")
-        cb("RecoilBackLeft", "Recul arrière gauche")
-        cb("RecoilFrontRight", "Recul avant droit")
-        cb("RecoilBackRight", "Recul arrière droit")
+        cb("IAgreeRecoilTermsInLicense", "I accept the recoil terms of use (Sinden licence)")
+        cb("EnableRecoil", "Enable recoil")
+        cb("RecoilTrigger", "Recoil on trigger")
+        cb("RecoilTriggerOffscreen", "Recoil on offscreen trigger")
+        cb("RecoilPumpActionOnEvent", "Pump action recoil – press")
+        cb("RecoilPumpActionOffEvent", "Pump action recoil – release")
+        cb("RecoilFrontLeft", "Front left recoil")
+        cb("RecoilBackLeft", "Rear left recoil")
+        cb("RecoilFrontRight", "Front right recoil")
+        cb("RecoilBackRight", "Rear right recoil")
         self.rc_mode = QtWidgets.QComboBox()
-        self.rc_mode.addItem("Normal (un recul par tir)", "0")
-        self.rc_mode.addItem("Automatique (mitraillette)", "1")
-        f.addRow("Style de recul de la gâchette", self.rc_mode)
+        self.rc_mode.addItem("Normal (one recoil per shot)", "0")
+        self.rc_mode.addItem("Automatic (machine gun)", "1")
+        f.addRow("Trigger recoil style", self.rc_mode)
         def sp(key, label, lo, hi):
             s = QtWidgets.QSpinBox()
             s.setRange(lo, hi)
             self.rc[key] = s
             f.addRow(label, s)
-        sp("RecoilStrength", "Force du recul (0-100)", 0, 100)
-        sp("AutoRecoilStrength", "Auto : durée d'impulsion (force)", 0, 200)
-        sp("AutoRecoilDelayBetweenPulses", "Auto : délai entre impulsions", 0, 200)
-        sp("AutoRecoilStartDelay", "Auto : délai après la 1re impulsion", 0, 200)
+        sp("RecoilStrength", "Recoil strength (0-100)", 0, 100)
+        sp("AutoRecoilStrength", "Auto: pulse duration (strength)", 0, 200)
+        sp("AutoRecoilDelayBetweenPulses", "Auto: delay between pulses", 0, 200)
+        sp("AutoRecoilStartDelay", "Auto: delay after the 1st pulse", 0, 200)
         lay.addLayout(f)
-        b = QtWidgets.QPushButton("Enregistrer (appliqué au prochain démarrage)")
+        b = QtWidgets.QPushButton("Save (applied at next start)")
         b.clicked.connect(self.save_recoil)
         lay.addWidget(b)
         lay.addStretch(1)
@@ -714,12 +714,12 @@ class MainWindow(QtWidgets.QMainWindow):
         w = QtWidgets.QWidget()
         lay = QtWidgets.QVBoxLayout(w)
         lab = QtWidgets.QLabel(
-            "<h2>OpenSinden</h2><p>Réimplémentation Python/Qt6 pour Linux du pilote Sinden Lightgun "
-            "(interopérabilité avec le matériel). Bordures d'écran basées sur "
+            "<h2>OpenSinden</h2><p>Python/Qt6 reimplementation for Linux of the Sinden Lightgun driver "
+            "(hardware interoperability). Screen borders based on "
             "<i>kde-screen-borders</i> (Brent Spillner, BSD).</p>"
-            "<p>Fichier de configuration : <code>%s</code></p>"
-            "<p>Sinden Lightgun est une marque de Sinden Technology Ltd. Ce logiciel n'est pas "
-            "affilié à Sinden Technology.</p>" % self.config.path)
+            "<p>Configuration file: <code>%s</code></p>"
+            "<p>Sinden Lightgun is a trademark of Sinden Technology Ltd. This software is not "
+            "affiliated with Sinden Technology.</p>" % self.config.path)
         lab.setWordWrap(True)
         lab.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         lay.addWidget(lab)
@@ -829,7 +829,7 @@ class MainWindow(QtWidgets.QMainWindow):
             cal = (self.cal_x.value(), self.cal_y.value())
             if cal != tuple(tr.calibration):
                 tr.set_calibration(*cal)
-        self.statusBar().showMessage("Réglages enregistrés dans %s" % c.path, 4000)
+        self.statusBar().showMessage("Settings saved in %s" % c.path, 4000)
 
     def _load_buttons(self):
         joy = bool(self.btn_mode.currentData())
@@ -853,7 +853,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if tr and tr.alive and tr.joystick_mode == joy:
             a, m = self._pcfg().button_actions(joy)
             tr.queue(lambda t: t.gun.assign_buttons(a, m))
-        self.statusBar().showMessage("Boutons enregistrés", 4000)
+        self.statusBar().showMessage("Buttons saved", 4000)
 
     def _load_recoil(self):
         p = self._pcfg()
@@ -873,7 +873,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.config.set(p.k(key), wdg.value())
         self.config.set(p.k("TriggerRecoilNormalOrRepeat"), self.rc_mode.currentData())
         self.config.save()
-        self.statusBar().showMessage("Réglages du recul enregistrés (appliqués au prochain démarrage)", 5000)
+        self.statusBar().showMessage("Recoil settings saved (applied at next start)", 5000)
 
     # -------------------------------------------------------------- actions
     def _tracker(self):
@@ -892,10 +892,10 @@ class MainWindow(QtWidgets.QMainWindow):
         for i, port in enumerate(ports):
             cam = camera_for_port(port) or "?"
             names = dict(list_video_devices())
-            self.gun_list.addItem("P%d : SindenLightgun %s  —  caméra %s (%s)" %
+            self.gun_list.addItem("P%d: SindenLightgun %s  —  camera %s (%s)" %
                                   (i + 1, port, cam, names.get(cam, "")))
         if not ports:
-            self.gun_list.addItem("Aucun pistolet détecté")
+            self.gun_list.addItem("No gun detected")
 
     def start(self):
         try:
@@ -937,7 +937,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _check_border(self):
         if self.border and self.border.failed():
             err = self.border.error_output() if hasattr(self.border, "error_output") else ""
-            log.warning("Bordure layer-shell impossible, repli sur la fenêtre Qt. %s", err.strip()[:300])
+            log.warning("Layer-shell border failed, falling back to the Qt window. %s", err.strip()[:300])
             settings = borders.BorderSettings.from_config(self.config)
             settings.method = "qt"
             self.border = borders.QtBorder(settings)
@@ -959,7 +959,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def burn_calibration(self):
         tr = self._tracker()
         if not tr or not tr.alive:
-            QtWidgets.QMessageBox.information(self, "OpenSinden", "Démarrez d'abord le pistolet.")
+            QtWidgets.QMessageBox.information(self, "OpenSinden", "Start the gun first.")
             return
         tr.set_calibration(self.cal_x.value(), self.cal_y.value(), save=True)
 
@@ -995,7 +995,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if v is not None:
                 self.cam_ctrls[key].setValue(v)
             else:
-                self.statusBar().showMessage("Contrôle %s non supporté par la caméra" % key, 4000)
+                self.statusBar().showMessage("Control %s not supported by the camera" % key, 4000)
 
     def set_camera_control(self, key):
         tr = self._tracker()
@@ -1038,26 +1038,26 @@ class MainWindow(QtWidgets.QMainWindow):
             i = t.info()
             sent = i["last_sent"]
             lines.append(
-                "<b>%s</b> (%s) : %s — caméra %s %s, firmware %s, %.1f img/s, traitement %.1f ms, "
-                "bordure détectée %d%%, position %s, calibration X=%.2f Y=%.2f%s%s" % (
+                "<b>%s</b> (%s): %s — camera %s %s, firmware %s, %.1f fps, processing %.1f ms, "
+                "border detected %d%%, position %s, calibration X=%.2f Y=%.2f%s%s" % (
                     i["name"], i["port"], i["status"], i["camera_name"], i["camera_path"] or "",
                     i["firmware"], i["fps"], i["process_ms"], i["found_ratio"] * 100,
                     ("%.1f%% / %.1f%%" % sent) if sent else "—", i["calibration"][0],
-                    i["calibration"][1], " <b>[MODE CALIBRATION]</b>" if i["in_calibration"] else "",
+                    i["calibration"][1], " <b>[CALIBRATION MODE]</b>" if i["in_calibration"] else "",
                     (" <span style='color:red'>%s</span>" % i["error"]) if i["error"] else ""))
-        self.home_status.setText("<br>".join(lines) or "Aucun pistolet démarré.")
+        self.home_status.setText("<br>".join(lines) or "No gun started.")
         tr = self._tracker()
         if tr:
             i = tr.info()
-            self.perf_label.setText("%.1f img/s — temps de traitement moyen %.2f ms — bordure détectée "
-                                    "sur %d%% des images" % (i["fps"], i["process_ms"], i["found_ratio"] * 100))
+            self.perf_label.setText("%.1f fps — average processing time %.2f ms — border detected "
+                                    "in %d%% of frames" % (i["fps"], i["process_ms"], i["found_ratio"] * 100))
             self.gun_info.setPlainText(
-                "SindenLightgun %s\nCaméra : %s (%s)\nCaméra à l'envers : %s\nFirmware : %s\n"
-                "CalibrationX : %.2f\nCalibrationY : %.2f\nÉtat des boutons : %s" % (
-                    i["port"], i["camera_name"], i["camera_path"], "oui" if i["upside_down"] else "non",
+                "SindenLightgun %s\nCamera: %s (%s)\nCamera upside down: %s\nFirmware: %s\n"
+                "CalibrationX: %.2f\nCalibrationY: %.2f\nButton state: %s" % (
+                    i["port"], i["camera_name"], i["camera_path"], "yes" if i["upside_down"] else "no",
                     i["firmware"], i["calibration"][0], i["calibration"][1], i["buttons"]))
         running = self.engine.running
-        self.status_label.setText("En marche" if running else "Arrêté")
+        self.status_label.setText("Running" if running else "Stopped")
         if running != (not self.start_btn.isEnabled()):
             self._update_buttons()
 
@@ -1073,11 +1073,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.cal_x.setValue(ev[1][0])
             self.cal_y.setValue(ev[1][1])
             self._update_alignment_labels()
-            self.statusBar().showMessage("Calibration : X=%.2f Y=%.2f" % ev[1], 5000)
+            self.statusBar().showMessage("Calibration: X=%.2f Y=%.2f" % ev[1], 5000)
         elif kind == "calibration_saved":
-            self.statusBar().showMessage("Calibration enregistrée dans le pistolet", 5000)
+            self.statusBar().showMessage("Calibration saved in the gun", 5000)
         elif kind == "calibration_failed":
-            self.statusBar().showMessage("Calibration impossible : la bordure doit être entièrement visible", 6000)
+            self.statusBar().showMessage("Calibration impossible: the border must be fully visible", 6000)
         elif kind == "status":
             self._update_buttons()
             if ev[1] == "running" and tracker.player == self.player:
@@ -1087,12 +1087,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def _setup_tray(self):
         self.tray = QtWidgets.QSystemTrayIcon(make_icon(), self)
         menu = QtWidgets.QMenu()
-        menu.addAction("Afficher", self.showNormal)
-        self.tray_start = menu.addAction("Démarrer", self.start)
-        self.tray_stop = menu.addAction("Arrêter", self.stop)
-        menu.addAction("Bordure", self.toggle_border)
+        menu.addAction("Show", self.showNormal)
+        self.tray_start = menu.addAction("Start", self.start)
+        self.tray_stop = menu.addAction("Stop", self.stop)
+        menu.addAction("Border", self.toggle_border)
         menu.addSeparator()
-        menu.addAction("Quitter", self.quit)
+        menu.addAction("Quit", self.quit)
         self.tray.setContextMenu(menu)
         self.tray.activated.connect(lambda r: self.showNormal() if r == QtWidgets.QSystemTrayIcon.ActivationReason.Trigger else None)
         if QtWidgets.QSystemTrayIcon.isSystemTrayAvailable():

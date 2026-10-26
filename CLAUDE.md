@@ -1,71 +1,71 @@
 # CLAUDE.md
 
-OpenSinden : réimplémentation Python / Qt6 (PySide6) du pilote Linux Sinden Lightgun
-(`SindenLightgun/LightgunMono.exe`, .NET/Mono). Interface et messages en français.
+OpenSinden: Python / Qt6 (PySide6) reimplementation of the Linux Sinden Lightgun driver
+(`SindenLightgun/LightgunMono.exe`, .NET/Mono). Interface and messages in English.
 
-## Règles de sécurité (impératives)
+## Safety rules (mandatory)
 
-- **Ne jamais tester le recul** : n'envoyer aucune commande 0xA1–0xAC / 0xB5 avec une valeur
-  d'activation, pas de bouton « test recul ». Pour les essais, `EnableRecoil=0` → seul
-  `switch_off_recoil()` (A1 0) et B5 0 sont envoyés.
-- **Ne jamais mettre à jour le firmware** (fonction volontairement absente).
-- `save_calibration()` (commandes 'j'/'k') écrit dans la mémoire du pistolet : ne l'appeler que
-  sur demande de l'utilisateur.
-- Quand le pistolet tourne et vise l'écran, il **déplace le vrai curseur** (le pistolet est la
-  souris HID). Arrêter les essais rapidement ; tuer la GUI avec SIGTERM/SIGINT (gérés).
+- **Never test recoil**: send no 0xA1–0xAC / 0xB5 command with an activation value, no
+  "test recoil" button. For experiments, `EnableRecoil=0` → only `switch_off_recoil()` (A1 0)
+  and B5 0 are sent.
+- **Never update the firmware** (the feature is deliberately absent).
+- `save_calibration()` ('j'/'k' commands) writes to the gun's memory: only call it when the user
+  asks.
+- When the gun is running and aiming at the screen, it **moves the real cursor** (the gun is the
+  HID mouse). Stop experiments quickly; kill the GUI with SIGTERM/SIGINT (handled).
 
-## Commandes
+## Commands
 
 ```bash
-.venv/bin/python -m opensinden ...   # ou ./opensinden.sh ...
-./opensinden.sh info                 # handshake + infos (lecture seule, sûr)
-./opensinden.sh -v run               # pilote sans interface, logs fps/temps/position
+.venv/bin/python -m opensinden ...   # or ./opensinden.sh ...
+./opensinden.sh info                 # handshake + info (read-only, safe)
+./opensinden.sh -v run               # headless driver, fps/time/position logs
 ./opensinden.sh gui [--start] [--tab N]
 ./opensinden.sh calibrate | border [--toggle|--stop]
-QT_QPA_PLATFORM=offscreen ...        # tests GUI sans affichage
-spectacle -b -n -f -o fichier.png    # capture plein écran pour vérifier GUI/bordure
+QT_QPA_PLATFORM=offscreen ...        # GUI tests without a display
+spectacle -b -n -f -o file.png       # fullscreen capture to check the GUI/border
 ```
 
-Pour les tests, utiliser un fichier `--config` temporaire plutôt que
-`~/.config/opensinden/LightgunMono.exe.config` (config réelle de l'utilisateur).
+For tests, use a temporary `--config` file rather than
+`~/.config/opensinden/LightgunMono.exe.config` (the user's real config).
 
-Le venv `.venv/` (PySide6, numpy, opencv-python-headless) est basé sur `/usr/bin/python3.13`.
-**Python >= 3.12 obligatoire** (garde dans `__main__.py`) : avec le Python 3.10 de pyenv (`python3`
-par défaut), PySide6 6.12 perd une référence à `None` à chaque émission de signal → crash
-« Fatal Python error: none_dealloc » après ~8000 événements (vu en lançant MAME). Pour vérifier
-une fuite : comparer `sys.getrefcount(None)` avant/après N appels (sans effet sur 3.12+, None
-immortel).
+The `.venv/` venv (PySide6, numpy, opencv-python-headless) is based on `/usr/bin/python3.13`.
+**Python >= 3.12 required** (guard in `__main__.py`): with pyenv's Python 3.10 (default
+`python3`), PySide6 6.12 loses a reference to `None` on every signal emission → crash
+"Fatal Python error: none_dealloc" after ~8000 events (seen when running MAME). To check for a
+leak: compare `sys.getrefcount(None)` before/after N calls (no effect on 3.12+, `None` is
+immortal).
 
 ## Architecture
 
-- `protocol.py` : trames `AA cmd a b c d BB`, 115200 bauds, DTR/RTS. Handshake SHA-256 à deux
-  sens (sels `_SECRET_1[32:73]`, `_SECRET_2[32:64]`), puis 'y' ×2. Position : 0x28 + X,Y
-  big-endian sur 0..32767. Événements reçus : C8/C9/CA calibration, FE + 2 octets boutons.
-- `camera.py` : OpenCV V4L2 MJPEG + contrôles par ioctl. **Ne pas régler
-  `CAP_PROP_BUFFERSIZE=1`** (divise les fps par 2).
-- `vision.py` : masque couleur (LUT, bit-identique à la formule d'origine, réduit 2×2 « au moins
-  un pixel »), plus grand quadrilatère convexe, homographie vers une grille **0..99** (comme
-  AForge d'origine, garde les calibrations existantes compatibles). Viseur fixe 4,9 %.
-- `engine.py` : un thread par pistolet. Caméra ↔ pistolet appariés par hub USB parent.
-  Règles caméra d'origine : nom (réponse 'f', espaces retirés) de longueur 1–11 → caméra à
-  l'endroit ; brightness −100 seulement pour SindenCamA/B ; SindenCamC → expo manuelle 78.
-- `borders.py` : QML layer-shell généré depuis `kde-screen-borders/` lancé par `qml6`
-  (nécessite `layer-shell-qt6-imports` ; `QML_IMPORT_PATH` est aussi pris en compte), sinon
-  overlay PySide6. **L'overlay Qt est masqué par les fenêtres plein écran (MAME) et parfois par
-  la barre Plasma** : seule la couche « overlay » layer-shell reste au-dessus (vérifié par
-  capture `spectacle` + fenêtre plein écran de test).
-- `config.py` : format XML `LightgunMono.exe.config` (commentaires conservés) ; suffixe `P2`
-  pour le joueur 2 ; clés supplémentaires listées dans `EXTRA_DEFAULTS`.
+- `protocol.py`: `AA cmd a b c d BB` frames, 115200 baud, DTR/RTS. Two-way SHA-256 handshake
+  (salts `_SECRET_1[32:73]`, `_SECRET_2[32:64]`), then 'y' ×2. Position: 0x28 + X,Y big-endian
+  over 0..32767. Received events: C8/C9/CA calibration, FE + 2 button bytes.
+- `camera.py`: OpenCV V4L2 MJPEG + controls via ioctl. **Do not set
+  `CAP_PROP_BUFFERSIZE=1`** (halves the fps).
+- `vision.py`: colour mask (LUT, bit-identical to the original formula, reduced 2×2 "at least one
+  pixel"), largest convex quadrilateral, homography to a **0..99** grid (like the original
+  AForge, keeps existing calibrations compatible). Fixed sight offset 4.9%.
+- `engine.py`: one thread per gun. Camera ↔ gun matched by parent USB hub. Original camera
+  rules: name ('f' reply, spaces removed) of length 1–11 → camera upright; brightness −100 only
+  for SindenCamA/B; SindenCamC → manual exposure 78.
+- `borders.py`: layer-shell QML generated from `kde-screen-borders/`, launched by `qml6`
+  (requires `layer-shell-qt6-imports`; `QML_IMPORT_PATH` is also honoured), otherwise a PySide6
+  overlay. **The Qt overlay is hidden by fullscreen windows (MAME) and sometimes by the Plasma
+  panel**: only the layer-shell "overlay" layer stays on top (checked with a `spectacle` capture
+  + a fullscreen test window).
+- `config.py`: `LightgunMono.exe.config` XML format (comments preserved); `P2` suffix for
+  player 2; extra keys listed in `EXTRA_DEFAULTS`.
 
-## Rétro-ingénierie
+## Reverse engineering
 
-IL désassemblé avec `mono /usr/lib/mono/4.5/ikdasm.exe SindenLightgun/LightgunMono.exe`.
-Méthodes clés : `HandshakeWithLightgun`, `SetupLightgunSettings`, `AssignButtons`,
+IL disassembled with `mono /usr/lib/mono/4.5/ikdasm.exe SindenLightgun/LightgunMono.exe`.
+Key methods: `HandshakeWithLightgun`, `SetupLightgunSettings`, `AssignButtons`,
 `AssignRecoil`, `MoveMouse`, `ProcessImage`, `FilterImage2`, `GetXYPercentagesMatrix`,
-`WorkOutCentreOfQuad`, `CameraSettings`, `ReadConfigValues`. Se référer à l'IL avant de
-modifier un comportement « fidèle à l'original ».
+`WorkOutCentreOfQuad`, `CameraSettings`, `ReadConfigValues`. Consult the IL before changing a
+behaviour that must stay "faithful to the original".
 
-## Matériel de test
+## Test hardware
 
-1 pistolet : `/dev/ttyACM0` (16c0:0f38, firmware v1.9), caméra `SindenCamC` `/dev/video0`
-(16d0:1097), même hub USB `1-1`. Session KDE Wayland, écran 1920×1080.
+1 gun: `/dev/ttyACM0` (16c0:0f38, firmware v1.9), camera `SindenCamC` `/dev/video0`
+(16d0:1097), same USB hub `1-1`. KDE Wayland session, 1920×1080 screen.

@@ -329,9 +329,9 @@ def create_border(settings: BorderSettings, screen_height):
         return LayerShellBorder(settings, screen_height)
     if settings.method == "auto":
         logging.getLogger(__name__).warning(
-            "Bordure : module QML org.kde.layershell absent, repli sur une fenêtre Qt qui sera "
-            "masquée par les jeux plein écran et parfois par la barre des tâches. "
-            "Installez-le : sudo zypper install layer-shell-qt6-imports")
+            "Border: QML module org.kde.layershell missing, falling back to a Qt window that will "
+            "be hidden by fullscreen games and sometimes by the taskbar. "
+            "Install it: sudo zypper install layer-shell-qt6-imports")
     return QtBorder(settings)
 
 
